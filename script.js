@@ -47,7 +47,6 @@ function showMenu(t, inst) {
     document.getElementById("highScoreRow").style.display = (gameMode === "contrarreloj") ? "block" : "none";
     statsContainer.style.display = "block";
     
-    startClassicBtn.className = ""; 
     if (gameMode === "mision") {
         startClassicBtn.innerText = "Reintentar modo misión 🛸";
         startClassicBtn.onclick = () => initGame("mision");
@@ -65,7 +64,7 @@ function showMenu(t, inst) {
 }
 
 /* ==========================================
-   3. MECÁNICAS (ALIENS Y SPAWNS)
+   3. MECÁNICAS (DISTANCIA Y SPAWNS)
    ========================================== */
 
 function getDistance(x1, y1, x2, y2) {
@@ -79,6 +78,7 @@ function getSafePosition() {
         tooClose = false;
         x = Math.random() * (window.innerWidth - 150) + 75;
         y = Math.random() * (window.innerHeight - 250) + 125;
+        
         const existingItems = document.querySelectorAll('.alien');
         existingItems.forEach(item => {
             const ix = parseFloat(item.style.left);
@@ -164,7 +164,11 @@ function initGame(mode) {
     game.innerHTML = "";
     createBackground(); 
     
-    stopAllIntervals();
+    clearTimeout(alienTimeout);
+    clearInterval(goldInterval);
+    clearInterval(monsterInterval);
+    clearInterval(countdownInterval);
+    
     overlay.style.display = "none";
     liveScore.classList.remove("hidden");
     
@@ -183,23 +187,24 @@ function initGame(mode) {
 
 function triggerGameOver(reason) {
     if (!gameActive) return;
-    const sub = (reason === "puntos") ? "¡Se acabaron los puntos! 🚨" : 
-                (gameMode === "mision" ? "¡El alien no llegó! 🛸💨" : "¡Tiempo agotado! ⏱️");
-    stopAll();
-    showMenu("¡Oh no! 😵‍💫", sub);
-}
+    const titulo = "¡Oh no! 😵‍💫";
+    let subtexto = "";
 
-function stopAllIntervals() {
+    if (reason === "puntos") {
+        subtexto = "¡Se acabaron los puntos! 🚨";
+    } else {
+        subtexto = (gameMode === "mision") 
+            ? "¡El alien no llegó a la nave! 🛸💨" 
+            : "¡Se acabó el tiempo de reacción! ⏱️";
+    }
+    
+    gameActive = false;
     clearTimeout(alienTimeout);
     clearInterval(goldInterval);
     clearInterval(monsterInterval);
     clearInterval(countdownInterval);
-}
-
-function stopAll() {
-    gameActive = false;
-    stopAllIntervals();
     game.innerHTML = "";
+    showMenu(titulo, subtexto);
 }
 
 /* ==========================================
@@ -213,9 +218,13 @@ function updateUI() {
         progressFill.style.width = p + "%";
         progressAlien.style.left = `calc(${p}% - 20px)`;
         if (score >= MISSION_GOAL) {
-            stopAll();
+            gameActive = false;
+            clearTimeout(alienTimeout);
+            clearInterval(goldInterval);
+            clearInterval(monsterInterval);
+            clearInterval(countdownInterval);
             startVictoryCelebration();
-            showMenu("¡Victoria! 🏆", "¡Misión cumplida! 👽🛸");
+            showMenu("¡Misión Cumplida! 🏆", "¡El alien llegó a su nave! 👽🛸");
         }
     } else {
         const timePart = liveScore.innerText.split('|')[0] || "30s";
@@ -229,8 +238,9 @@ function startCountdown(seconds) {
     countdownInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft <= 0) {
-            stopAll();
-            showMenu("¡Tiempo cumplido! 🏆", "¡Récord guardado! 🚀✨"); 
+            gameActive = false;
+            clearInterval(countdownInterval);
+            showMenu(`¡Alcanzaste los ${CONTRARRELOJ_TIME} segundos! 🏆`, "¡Tu velocidad es de otro planeta! 🚀✨"); 
         } else {
             liveScore.innerText = `${timeLeft}s | Puntos: ${score}`;
         }
@@ -268,13 +278,13 @@ function createBackground() {
 
 function startVictoryCelebration() {
     for(let i = 0; i < 15; i++) {
-        const c = document.createElement("div");
-        c.className = "rocket"; 
-        c.textContent = Math.random() > 0.5 ? "🛸" : "👽";
-        c.style.top = Math.random() * 90 + "vh";
-        c.style.left = "-15vw";
-        c.style.animationDuration = (Math.random() * 4 + 3) + "s";
-        space.appendChild(c);
+        const celebrant = document.createElement("div");
+        celebrant.className = "rocket"; 
+        celebrant.textContent = Math.random() > 0.5 ? "🛸" : "👽";
+        celebrant.style.top = Math.random() * 90 + "vh";
+        celebrant.style.left = "-15vw";
+        celebrant.style.animationDuration = (Math.random() * 4 + 3) + "s";
+        space.appendChild(celebrant);
     }
 }
 
