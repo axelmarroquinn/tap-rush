@@ -1,0 +1,137 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: black;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* --- ESCENARIO DINÁMICO --- */
+.space {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.star, .rocket {
+  position: absolute;
+  color: white;
+  opacity: 0.8;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes moveRightSlow {
+  from { transform: translateX(-10vw); }
+  to   { transform: translateX(110vw); }
+}
+
+.star { font-size: 6px; animation: moveRightSlow linear infinite; }
+.rocket { font-size: 18px; opacity: 0.7; animation: moveRightSlow linear infinite; }
+
+/* --- MARCADOR EN JUEGO --- */
+#liveScore {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+  z-index: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+/* --- PANEL LIQUID GLASS --- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(25px) saturate(160%);
+  -webkit-backdrop-filter: blur(25px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 28px;
+  padding: 32px;
+  text-align: center;
+  color: white;
+  width: 320px;
+}
+
+/* Animación de Título (Intermitente) */
+@keyframes thunderFlash {
+  0%, 84%, 90%, 100% { color: white; text-shadow: none; transform: scale(1); }
+  85% { color: #ffff00; text-shadow: 0 0 20px #ffff00; transform: scale(1.05); }
+  87% { color: #CB87FF; text-shadow: 0 0 25px #CB87FF; }
+  89% { color: white; text-shadow: 0 0 40px white; transform: scale(1.1); }
+}
+
+.panel h1 { 
+  font-size: 32px; 
+  margin-bottom: 12px; 
+  font-weight: 800;
+  animation: thunderFlash 5s infinite; 
+  display: inline-block;
+}
+
+.panel p { font-size: 15px; color: rgba(255, 255, 255, 0.8); margin: 6px 0; }
+
+span { color: #CB87FF; font-weight: 700; text-shadow: 0 0 10px rgba(203, 135, 255, 0.3); }
+
+/* --- BOTÓN APPLE STYLE --- */
+.panel button {
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 18px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  background: white;
+  color: black;
+  width: 100%;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel button:hover {
+  background: #CB87FF;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(203, 135, 255, 0.4);
+}
+
+.panel button:active { transform: scale(0.96); }
+
+/* --- ELEMENTOS DE JUEGO --- */
+.game { position: absolute; inset: 0; z-index: 5; }
+
+.alien { 
+  position: absolute; 
+  font-size: 50px; 
+  cursor: pointer; 
+  user-select: none;
+  filter: drop-shadow(0 0 10px rgba(203, 135, 255, 0.4));
+  transition: transform 0.1s ease;
+}
+
+.alien:active { transform: scale(1.2); }
+
+.hidden { display: none !important; }
