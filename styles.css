@@ -145,9 +145,9 @@ span { color: #CB87FF; font-weight: 700; text-shadow: 0 0 10px rgba(203, 135, 25
   bottom: 5vh;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 32px; 
+  font-size: 25px; 
   color: rgba(255, 255, 255, 0.6);
-  font-weight: 600;
+  font-weight: 400;
   z-index: 1;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
