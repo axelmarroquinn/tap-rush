@@ -1,3 +1,6 @@
+/* ==========================================
+   1. REGLAS BASE Y RESET
+   ========================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -11,9 +14,14 @@ body {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  transition: background-color 0.2s ease;
 }
 
-/* --- ESCENARIO DINÁMICO --- */
+.hidden { display: none !important; }
+
+/* ==========================================
+   2. ESCENARIO ESPACIAL (Fondo y Animaciones)
+   ========================================== */
 .space {
   position: absolute;
   inset: 0;
@@ -30,30 +38,71 @@ body {
   pointer-events: none;
 }
 
-@keyframes moveRightSlow {
-  from { transform: translateX(-10vw); }
-  to   { transform: translateX(110vw); }
-}
-
 .star { font-size: 6px; animation: moveRightSlow linear infinite; }
 .rocket { font-size: 18px; opacity: 0.7; animation: moveRightSlow linear infinite; }
 
-/* --- MARCADOR EN JUEGO --- */
-#liveScore {
-  position: absolute;
-  bottom: 5vh;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 28px;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 600;
-  z-index: 1;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-  user-select: none;
+@keyframes moveRightSlow {
+  from { transform: translateX(-15vw); }
+  to   { transform: translateX(115vw); }
 }
 
-/* --- PANEL LIQUID GLASS --- */
+/* ==========================================
+   3. BARRA DE PROGRESO (Modo Misión)
+   ========================================== */
+#progress-container {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  z-index: 100;
+}
+
+#progress-bar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#progress-fill {
+  position: absolute;
+  left: 0;
+  height: 2px;
+  background: rgba(203, 135, 255, 0.4);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+#progress-alien {
+  position: absolute;
+  left: 0%;
+  font-size: 22px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+#progress-ufo {
+  position: absolute;
+  right: 0;
+  font-size: 26px;
+  filter: drop-shadow(0 0 10px #CB87FF);
+}
+
+/* ==========================================
+   4. INTERFAZ DE USUARIO (Panel y Marcador)
+   ========================================== */
 .overlay {
   position: absolute;
   inset: 0;
@@ -76,14 +125,7 @@ body {
   width: 320px;
 }
 
-/* Animación de Título (Intermitente) */
-@keyframes thunderFlash {
-  0%, 84%, 90%, 100% { color: white; text-shadow: none; transform: scale(1); }
-  85% { color: #ffff00; text-shadow: 0 0 20px #ffff00; transform: scale(1.05); }
-  87% { color: #CB87FF; text-shadow: 0 0 25px #CB87FF; }
-  89% { color: white; text-shadow: 0 0 40px white; transform: scale(1.1); }
-}
-
+/* Tipografía y Textos */
 .panel h1 { 
   font-size: 32px; 
   margin-bottom: 12px; 
@@ -94,11 +136,29 @@ body {
 
 .panel p { font-size: 15px; color: rgba(255, 255, 255, 0.8); margin: 6px 0; }
 
+#stats-container p { font-size: 18px; margin: 10px 0; font-weight: 500; }
+
 span { color: #CB87FF; font-weight: 700; text-shadow: 0 0 10px rgba(203, 135, 255, 0.3); }
 
-/* --- BOTÓN APPLE STYLE --- */
+#liveScore {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px; 
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  z-index: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Botones */
+.button-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
 .panel button {
-  margin-top: 24px;
   padding: 14px;
   border-radius: 18px;
   border: none;
@@ -120,7 +180,9 @@ span { color: #CB87FF; font-weight: 700; text-shadow: 0 0 10px rgba(203, 135, 25
 
 .panel button:active { transform: scale(0.96); }
 
-/* --- ELEMENTOS DE JUEGO --- */
+/* ==========================================
+   5. ELEMENTOS DEL JUEGO (Aliens y Efectos)
+   ========================================== */
 .game { position: absolute; inset: 0; z-index: 5; }
 
 .alien { 
@@ -129,9 +191,29 @@ span { color: #CB87FF; font-weight: 700; text-shadow: 0 0 10px rgba(203, 135, 25
   cursor: pointer; 
   user-select: none;
   filter: drop-shadow(0 0 10px rgba(203, 135, 255, 0.4));
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, filter 0.3s ease;
 }
 
 .alien:active { transform: scale(1.2); }
 
-.hidden { display: none !important; }
+/* Variantes */
+.alien.golden { filter: drop-shadow(0 0 20px #FFD700) brightness(1.3); transform: scale(1.1); }
+.alien.monster { filter: hue-rotate(90deg) drop-shadow(0 0 15px #FF0000); }
+
+/* ==========================================
+   6. ANIMACIONES DE EFECTOS
+   ========================================== */
+@keyframes thunderFlash {
+  0%, 84%, 90%, 100% { color: white; text-shadow: none; transform: scale(1); }
+  85% { color: #ffff00; text-shadow: 0 0 20px #ffff00; transform: scale(1.05); }
+  87% { color: #CB87FF; text-shadow: 0 0 25px #CB87FF; }
+  89% { color: white; text-shadow: 0 0 40px white; transform: scale(1.1); }
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.shake { animation: errorShake 0.2s ease-in-out; }
