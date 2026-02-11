@@ -24,17 +24,15 @@ let alienTimeout, goldInterval, monsterInterval, countdownInterval;
 const REACTION_LIMIT = 1300;
 const MISSION_GOAL = 100; 
 const CONTRARRELOJ_TIME = 30;   
-const ITEM_MARGIN = 80;
 
 /* ==========================================
-   2. GESTIÓN DE MENÚS Y BOTONES DINÁMICOS
+   2. GESTIÓN DE MENÚS
    ========================================== */
 
 function showMenu(t, inst) {
     title.innerText = t;
     instruction.innerText = inst;
     
-    // Configuración de estadísticas
     const scoreLabel = gameMode === "contrarreloj" ? "Puntuación:" : "Puntos:";
     if (gameMode === "contrarreloj" && score > highScore) {
         highScore = score;
@@ -49,7 +47,7 @@ function showMenu(t, inst) {
     document.getElementById("highScoreRow").style.display = (gameMode === "contrarreloj") ? "block" : "none";
     statsContainer.style.display = "block";
     
-    // Lógica de transformación de botones (Reintentar / Menú)
+    startClassicBtn.className = ""; 
     if (gameMode === "mision") {
         startClassicBtn.innerText = "Reintentar modo misión 🛸";
         startClassicBtn.onclick = () => initGame("mision");
@@ -67,8 +65,30 @@ function showMenu(t, inst) {
 }
 
 /* ==========================================
-   3. MECÁNICAS DE JUEGO (ALIENS Y SPAWNS)
+   3. MECÁNICAS (ALIENS Y SPAWNS)
    ========================================== */
+
+function getDistance(x1, y1, x2, y2) {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+function getSafePosition() {
+    let x, y, tooClose;
+    let attempts = 0;
+    do {
+        tooClose = false;
+        x = Math.random() * (window.innerWidth - 150) + 75;
+        y = Math.random() * (window.innerHeight - 250) + 125;
+        const existingItems = document.querySelectorAll('.alien');
+        existingItems.forEach(item => {
+            const ix = parseFloat(item.style.left);
+            const iy = parseFloat(item.style.top);
+            if (getDistance(x, y, ix, iy) < 120) tooClose = true;
+        });
+        attempts++;
+    } while (tooClose && attempts < 10);
+    return { x, y };
+}
 
 function spawnNormalAlien() {
     if (!gameActive) return;
@@ -93,6 +113,16 @@ function spawnNormalAlien() {
     alienTimeout = setTimeout(() => triggerGameOver("tiempo"), REACTION_LIMIT);
 }
 
+function createItem(emoji, cls) {
+    const pos = getSafePosition();
+    const div = document.createElement("div");
+    div.className = `alien ${cls}`;
+    div.textContent = emoji;
+    div.style.left = `${pos.x}px`;
+    div.style.top = `${pos.y}px`;
+    return div;
+}
+
 function startSpawners() {
     goldInterval = setInterval(() => {
         if (!gameActive) return;
@@ -102,8 +132,6 @@ function startSpawners() {
             score += 5;
             updateUI();
             gold.remove();
-            clearTimeout(alienTimeout);
-            alienTimeout = setTimeout(() => triggerGameOver("tiempo"), REACTION_LIMIT);
         };
         game.appendChild(gold);
         setTimeout(() => { if(gold.parentNode) gold.remove(); }, 2000);
@@ -126,7 +154,7 @@ function startSpawners() {
 }
 
 /* ==========================================
-   4. CONTROL DE PARTIDA (INICIO, VICTORIA, DERROTA)
+   4. CONTROL DE PARTIDA
    ========================================== */
 
 function initGame(mode) {
@@ -136,17 +164,13 @@ function initGame(mode) {
     game.innerHTML = "";
     createBackground(); 
     
-    clearTimeout(alienTimeout);
-    clearInterval(goldInterval);
-    clearInterval(monsterInterval);
-    clearInterval(countdownInterval);
-    
+    stopAllIntervals();
     overlay.style.display = "none";
     liveScore.classList.remove("hidden");
     
     if (mode === "mision") {
         progressContainer.classList.remove("hidden");
-        liveScore.innerText = "0";
+        liveScore.innerText = "Puntos: 0";
     } else {
         progressContainer.classList.add("hidden");
         startCountdown(CONTRARRELOJ_TIME);
@@ -157,96 +181,30 @@ function initGame(mode) {
     startSpawners();
 }
 
-function winMission() {
-    stopAll();
-    startVictoryCelebration();
-    showMenu("¡Misión Cumplida! 🏆", "¡El alien llegó a su nave! 👽🛸");
-}
-
 function triggerGameOver(reason) {
     if (!gameActive) return;
-    const titulo = "¡Oh no! 😵‍💫";
-    let subtexto = "";
-
-    // Lógica de mensajes según la causa de derrota
-    if (reason === "puntos") {
-        subtexto = "¡Se acabaron los puntos! 🚨";
-    } else {
-        subtexto = (gameMode === "mision") 
-            ? "¡El alien no llegó a la nave! 🛸💨" 
-            : "¡Se acabó el tiempo de reacción! ⏱️";
-    }
-    
-    endGame(titulo, subtexto);
-}
-
-function endGame(t, inst) {
+    const sub = (reason === "puntos") ? "¡Se acabaron los puntos! 🚨" : 
+                (gameMode === "mision" ? "¡El alien no llegó! 🛸💨" : "¡Tiempo agotado! ⏱️");
     stopAll();
-    showMenu(t, inst);
+    showMenu("¡Oh no! 😵‍💫", sub);
 }
 
-function stopAll() {
-    gameActive = false;
+function stopAllIntervals() {
     clearTimeout(alienTimeout);
     clearInterval(goldInterval);
     clearInterval(monsterInterval);
     clearInterval(countdownInterval);
+}
+
+function stopAll() {
+    gameActive = false;
+    stopAllIntervals();
     game.innerHTML = "";
 }
 
 /* ==========================================
-   5. UTILIDADES Y EFECTOS
+   5. UTILIDADES Y FONDO
    ========================================== */
-
-// Calcula la distancia entre dos puntos (Teorema de Pitágoras)
-function getDistance(x1, y1, x2, y2) {
-    let xd = x2 - x1;
-    let yd = y2 - y1;
-    return Math.sqrt(xd * xd + yd * yd);
-}
-
-// Genera una posición que no esté cerca de otros aliens
-function getSafePosition() {
-    let x, y, tooClose;
-    let attempts = 0;
-
-    do {
-        tooClose = false;
-        x = Math.random() * (window.innerWidth - 150) + 75;
-        y = Math.random() * (window.innerHeight - 250) + 125;
-        
-        // Revisamos todos los aliens que ya están en el juego
-        const existingAliens = document.querySelectorAll('.alien');
-        for (let a of existingAliens) {
-            const ax = parseFloat(a.style.left);
-            const ay = parseFloat(a.style.top);
-            // Si la distancia es menor a 120px, está muy cerca
-            if (getDistance(x, y, ax, ay) < 120) {
-                tooClose = true;
-                break;
-            }
-        }
-        attempts++;
-        // Si después de 10 intentos no halla sitio (pantalla llena), sale igual
-    } while (tooClose && attempts < 10);
-
-    return { x, y };
-}
-
-
-function startCountdown(seconds) {
-    let timeLeft = seconds;
-    liveScore.innerText = `${timeLeft}s | Puntos: ${score}`;
-    countdownInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-            clearInterval(countdownInterval);
-            endGame(`¡Alcanzaste los ${CONTRARRELOJ_TIME} segundos! 🏆`, "¡Tu velocidad es de otro planeta! 🚀✨"); 
-        } else {
-            liveScore.innerText = `${timeLeft}s | Puntos: ${score}`;
-        }
-    }, 1000);
-}
 
 function updateUI() {
     if (gameMode === "mision") {
@@ -254,27 +212,29 @@ function updateUI() {
         const p = Math.min((score / MISSION_GOAL) * 100, 100);
         progressFill.style.width = p + "%";
         progressAlien.style.left = `calc(${p}% - 20px)`;
-        if (score >= MISSION_GOAL) winMission();
+        if (score >= MISSION_GOAL) {
+            stopAll();
+            startVictoryCelebration();
+            showMenu("¡Victoria! 🏆", "¡Misión cumplida! 👽🛸");
+        }
     } else {
-        const timePart = liveScore.innerText.split('|')[0];
-        liveScore.innerText = `${timePart} | Puntos: ${score}`;
+        const timePart = liveScore.innerText.split('|')[0] || "30s";
+        liveScore.innerText = `${timePart.trim()} | Puntos: ${score}`;
     }
 }
 
-function getSafePosition() {
-    let x = Math.random() * (window.innerWidth - 100) + 50;
-    let y = Math.random() * (window.innerHeight - 200) + 100;
-    return { x, y };
-}
-
-function createItem(emoji, cls) {
-    const pos = getSafePosition();
-    const div = document.createElement("div");
-    div.className = `alien ${cls}`;
-    div.textContent = emoji;
-    div.style.left = `${pos.x}px`;
-    div.style.top = `${pos.y}px`;
-    return div;
+function startCountdown(seconds) {
+    let timeLeft = seconds;
+    liveScore.innerText = `${timeLeft}s | Puntos: ${score}`;
+    countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            stopAll();
+            showMenu("¡Tiempo cumplido! 🏆", "¡Récord guardado! 🚀✨"); 
+        } else {
+            liveScore.innerText = `${timeLeft}s | Puntos: ${score}`;
+        }
+    }, 1000);
 }
 
 function triggerShake() {
@@ -282,49 +242,39 @@ function triggerShake() {
     setTimeout(() => document.body.classList.remove("shake"), 200);
 }
 
-function startVictoryCelebration() {
-    for(let i = 0; i < 15; i++) {
-        const celebrant = document.createElement("div");
-        celebrant.className = "rocket"; 
-        celebrant.textContent = Math.random() > 0.5 ? "🛸" : "👽";
-        celebrant.style.top = Math.random() * 90 + "vh";
-        celebrant.style.left = "-15vw";
-        celebrant.style.fontSize = "35px";
-        celebrant.style.animationDuration = (Math.random() * 4 + 3) + "s";
-        celebrant.style.animationDelay = (Math.random() * 2) + "s";
-        space.appendChild(celebrant);
-    }
-}
-
 function createBackground() {
     space.innerHTML = "";
-    
     for (let i = 0; i < 100; i++) {
         const star = document.createElement("div");
         star.className = "star"; 
         star.textContent = "•";
-        
         star.style.top = Math.random() * 100 + "vh";
         star.style.left = Math.random() * 100 + "vw";
-        
         star.style.animationDuration = (15 + Math.random() * 25) + "s";
         star.style.opacity = Math.random(); 
-        
         space.appendChild(star);
     }
-
     for (let i = 0; i < 8; i++) {
         const rocket = document.createElement("div");
         rocket.className = "rocket";
         rocket.textContent = "🚀";
-        
         rocket.style.top = Math.random() * 100 + "vh";
         rocket.style.left = "-15vw"; 
-        
         rocket.style.animationDuration = (8 + Math.random() * 12) + "s";
         rocket.style.animationDelay = (i * 3) + "s";
-        
         space.appendChild(rocket);
+    }
+}
+
+function startVictoryCelebration() {
+    for(let i = 0; i < 15; i++) {
+        const c = document.createElement("div");
+        c.className = "rocket"; 
+        c.textContent = Math.random() > 0.5 ? "🛸" : "👽";
+        c.style.top = Math.random() * 90 + "vh";
+        c.style.left = "-15vw";
+        c.style.animationDuration = (Math.random() * 4 + 3) + "s";
+        space.appendChild(c);
     }
 }
 
@@ -336,16 +286,10 @@ startContrarrelojBtn.onclick = () => initGame("contrarreloj");
 
 game.onclick = (e) => {
     if (gameActive && e.target === game) {
-        if (score > 0) {
-            score = Math.max(0, score - 2);
-            updateUI();
-            triggerShake();
-            // Si el error te deja en 0, pierdes
-            if (score <= 0) triggerGameOver("puntos");
-        } else {
-            // Si ya tenías 0 y fallas, pierdes
-            triggerGameOver("puntos");
-        }
+        score = Math.max(0, score - 2);
+        updateUI();
+        triggerShake();
+        if (score <= 0) triggerGameOver("puntos");
     }
 };
 
